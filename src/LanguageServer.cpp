@@ -2,7 +2,7 @@
 // Created by storto on 07/08/2025.
 //
 
-#include <Lsp/LSP.h>
+#include <Lsp/LanguageServer.h>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 #include <cstdio>
 
 #include <Lsp/_UTF8StringView.h>
-#include <Lsp/LSP-Glaze.h>
+#include <Lsp/_LSP-Glaze.h>
 
 namespace LSP {
 

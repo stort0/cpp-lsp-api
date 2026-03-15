@@ -7,7 +7,7 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <ranges>
 
-#include <Lsp/LSP-Protocol.h>
+#include <Lsp/Protocol.h>
 
 namespace LSP {
 
@@ -20,7 +20,7 @@ struct ExitSignal final : std::exception {
 template<typename T, typename V>
 concept PtrLike = std::same_as<T, const V *> or requires(T v)
 {
-        { !v } -> std::same_as<bool>;
+        { !v } -> std::convertible_to<bool>;
         { v.operator->() } -> std::same_as<const V *>;
 
 };
@@ -36,17 +36,17 @@ concept File = requires(const T v)
         typename T::TokenItT;
         typename T::TokenPtrT;
 
-        { v.begin() } -> std::same_as<typename T::TokenItT>;
-        { v.end() } -> std::same_as<typename T::TokenItT>;
+        { v.begin() } -> std::convertible_to<typename T::TokenItT>;
+        { v.end() } -> std::convertible_to<typename T::TokenItT>;
         { T::parse(std::string{}) } -> std::same_as<std::unique_ptr<T>>;
 
 }
 and requires (typename T::TokenItT it)
 {
         ++it;
-        { it == it } -> std::same_as<bool>;
-        { it != it } -> std::same_as<bool>;
-        requires std::same_as<std::remove_cvref_t<decltype(*it)>, typename T::TokenT>;
+        { it == it } -> std::convertible_to<bool>;
+        { it != it } -> std::convertible_to<bool>;
+        { *it } -> std::convertible_to<typename T::TokenT>;
         requires std::is_reference_v<decltype(*it)>;
 
 }
@@ -56,7 +56,7 @@ and requires (typename T::TokenPtrT p)
 }
 and requires (const typename T::TokenT t)
 {
-        { t.range() } -> std::same_as<Range>;
+        { t.range() } -> std::convertible_to<Range>;
         { t.operator<=>(t) } -> std::same_as<std::weak_ordering>;
         { t.operator<=>(Position{}) } -> std::same_as<std::weak_ordering>;
 
@@ -66,7 +66,7 @@ template<typename T>
 concept Notebook = requires(T v)
 {
         requires File<T>;
-        { T::notebook_selector } -> std::same_as<NotebookDocumentSyncOptions::_NotebookSelector>;
+        { T::notebook_selector } -> std::convertible_to<NotebookDocumentSyncOptions::_NotebookSelector>;
         { T::parse(std::string{}, NotebookCellKind{}, std::vector<T *>{}) } -> std::same_as<std::unique_ptr<T>>;
 
 }; // concept Notebook
@@ -83,7 +83,7 @@ template<typename T>
 concept HasResolve = requires(const T v)
 {
         requires File<T>;
-        { v.resolve(Position{}) } -> std::same_as<typename T::TokenPtrT>;
+        { v.resolve(Position{}) } -> std::convertible_to<typename T::TokenPtrT>;
 
 }; // concept HasResolve
 
@@ -115,7 +115,7 @@ template<typename T>
 concept HasHover = requires(const T v)
 {
         requires File<T>;
-        { v.hover(Position{}) } -> std::same_as<std::optional<MarkupContent>>;
+        { v.hover(Position{}) } -> std::convertible_to<std::optional<MarkupContent>>;
 
 }; // concept HasHover
 
@@ -202,7 +202,6 @@ template<typename T>
 concept HasSelectionRange = requires(T v)
 {
         requires File<T>;
-        // Returned values are increasingly big.
         { v.selectionRanges(Position{}) } -> std::convertible_to<std::vector<Range>>;
 
 }; // concept HasSelectionRange
@@ -243,7 +242,7 @@ template<typename T>
 concept HasSignatureHelp = requires(const T v)
 {
         requires File<T>;
-        { v.signatureHelp(Position{}) } -> std::same_as<std::optional<SignatureHelp>>;
+        { v.signatureHelp(Position{}) } -> std::convertible_to<std::optional<SignatureHelp>>;
 
 }; // concept HasSignatureHelp
 
@@ -268,8 +267,7 @@ template<typename T>
 concept HasFormatting = requires(const T v)
 {
         requires File<T>;
-        { v.format(FormattingOptions{}) } -> std::convertible_to<std::vector<TextEdit>>;
-        { v.format(FormattingOptions{}, Range{}) } -> std::convertible_to<std::vector<TextEdit>>;
+        { v.format(FormattingOptions{}, std::optional<Range>{}) } -> std::convertible_to<std::vector<TextEdit>>;
 
 }; // concept HasFormatting
 
@@ -290,7 +288,7 @@ concept HasRename = requires(const T v)
         typename T::RefactorContextT;
         requires std::same_as<std::remove_cvref_t<typename T::RefactorContextT>, typename T::RefactorContextT>;
 
-        { v.createRenameCtx(Position{}, string{}) } -> std::same_as<typename T::RefactorContextT>;
+        { v.createRenameCtx(Position{}, string{}) } -> std::convertible_to<typename T::RefactorContextT>;
         { v.rename(typename T::RefactorContextT{}) } -> std::convertible_to<std::vector<TextEdit>>;
 
 }; // concept HasRename
@@ -299,7 +297,7 @@ template<typename T>
 concept HasPrepareRename = requires(const T v)
 {
         requires HasRename<T>;
-        { v.canRename(Position{}) } -> std::same_as<std::expected<Range, string>>;
+        { v.canRename(Position{}) } -> std::convertible_to<std::expected<Range, string>>;
 
 }; // concept HasPrepareRename
 
@@ -307,7 +305,7 @@ template<typename T>
 concept HasLinkedEditing = requires(const T v)
 {
         requires HasRename<T>;
-        { v.editingRanges(Position{}) } -> std::same_as<LinkedEditingRanges>;
+        { v.editingRanges(Position{}) } -> std::convertible_to<LinkedEditingRanges>;
 
 }; // concept HasLinkedEditing
 
@@ -1478,7 +1476,7 @@ private:
                 if (it == m_openDocuments.end())
                         return internal_error;
 
-                std::vector<TextEdit> edits = it->second.file->format(params.options);
+                std::vector<TextEdit> edits = it->second.file->format(params.options, std::nullopt);
                 if (edits.empty())
                         return nullptr;
 

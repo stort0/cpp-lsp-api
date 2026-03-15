@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SRC_DIR     "${CMAKE_CURRENT_LIST_DIR}/src")
 set(INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
 
-add_library(CPP_LSP_API "${SRC_DIR}/LSP.cpp")
+file(GLOB_RECURSE SOURCES "${SRC_DIR}/*.cpp")
+add_library(CPP_LSP_API ${SOURCES})
 target_include_directories(CPP_LSP_API PUBLIC "${INCLUDE_DIR}")
 
 # ------------------------------------------------------------------------------

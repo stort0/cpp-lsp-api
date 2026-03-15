@@ -6,7 +6,7 @@
 
 #include <glaze/glaze.hpp>
 
-#include <Lsp/LSP-Protocol.h>
+#include <Lsp/Protocol.h>
 
 #define GLAZE_META(__type__, ...)                               \
 template<>                                                      \
