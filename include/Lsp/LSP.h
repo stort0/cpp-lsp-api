@@ -7,7 +7,7 @@
 #include <glaze/ext/jsonrpc.hpp>
 #include <ranges>
 
-#include <LSP-Protocol.h>
+#include <Lsp/LSP-Protocol.h>
 
 namespace LSP {
 
@@ -464,7 +464,7 @@ private:
         auto _readMessage() const -> std::string;
         void _writeMessage(std::string &&msg) const;
         void _writeError(ErrorCodes error, std::string &&msg) const;
-        void _addWorkspaceSymbol(const DocumentUri &uri, std::vector<WorkspaceSymbol> &symbols, const DocumentSymbol &symbol, const std::optional<string> &containerName = std::nullopt) const;
+        void _addWorkspaceSymbol(const DocumentUri &uri, std::vector<WorkspaceSymbol> &symbols, DocumentSymbol &symbol, const std::optional<string> &containerName = std::nullopt) const;
 
 }; // class _LanguageServerImpl
 

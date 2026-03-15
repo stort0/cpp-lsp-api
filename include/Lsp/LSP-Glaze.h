@@ -1,12 +1,12 @@
 //
-// Created by stort on 08/08/2025.
+// Created by storto on 08/08/2025.
 //
 
 #pragma once
 
 #include <glaze/glaze.hpp>
 
-#include <LSP-Protocol.h>
+#include <Lsp/LSP-Protocol.h>
 
 #define GLAZE_META(__type__, ...)                               \
 template<>                                                      \

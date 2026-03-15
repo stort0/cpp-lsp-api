@@ -1,5 +1,5 @@
 //
-// Created by stort on 06/08/2025.
+// Created by storto on 06/08/2025.
 //
 
 #pragma once
@@ -15,7 +15,7 @@
 #include <string>
 #include <array>
 
-#include <_StringEnum.h>
+#include <Lsp/_StringEnum.h>
 
 struct _Void {};
 

@@ -1,8 +1,8 @@
 //
-// Created by stort on 07/08/2025.
+// Created by storto on 07/08/2025.
 //
 
-#include <LSP.h>
+#include <Lsp/LSP.h>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -13,8 +13,8 @@
 namespace fs = std::filesystem;
 #include <cstdio>
 
-#include <_UTF8StringView.h>
-#include <LSP-Glaze.h>
+#include <Lsp/_UTF8StringView.h>
+#include <Lsp/LSP-Glaze.h>
 
 namespace LSP {
 
@@ -262,7 +262,7 @@ void _LanguageServerImpl::_writeError(ErrorCodes error, std::string &&msg) const
         )).value());
 }
 
-void _LanguageServerImpl::_addWorkspaceSymbol(const DocumentUri &uri, std::vector<WorkspaceSymbol> &symbols, const DocumentSymbol &symbol, const std::optional<string> &containerName) const
+void _LanguageServerImpl::_addWorkspaceSymbol(const DocumentUri &uri, std::vector<WorkspaceSymbol> &symbols, DocumentSymbol &symbol, const std::optional<string> &containerName) const
 {
         for (auto &child : symbol.children.value_or({}))
                 _addWorkspaceSymbol(uri, symbols, child, symbol.name);
