@@ -425,7 +425,6 @@ protected:
         using Expected = std::expected<T, glz::rpc::error>;
 
         static const std::unexpected<glz::rpc::error>      not_initialized_error;
-        static const std::unexpected<glz::rpc::error>      internal_error;
         static const std::expected<_Void, glz::rpc::error> none;
 
         ServerT m_server;  // TODO: use glz::rpc::registry
@@ -451,6 +450,7 @@ protected:
         auto _hierarchyItemToCall(const string &uri, std::vector<HierarchyItem> &items) const -> std::vector<CallHierarchyItem>;
         auto _hierarchyItemToType(const string &uri, std::vector<HierarchyItem> &items) const -> std::vector<TypeHierarchyItem>;
         auto _convertDocumentSymbols(const DocumentUri &uri, std::vector<DocumentSymbol> &symbols) const -> std::vector<WorkspaceSymbol>;
+        auto _internalError(const std::string &msg) const -> std::unexpected<glz::rpc::error>;
 
         auto initialize(const InitializeParams &params) -> Expected<InitializeResult>;
         auto initialized(const InitializedParams &params) -> Expected<_Void>;
@@ -681,7 +681,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 TextDocumentItem &doc = it->second.textDocument;
                 if (doc.version >= params.textDocument.version)
@@ -711,7 +711,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<TextEdit> edits = it->second.file->save();
                 if (edits.empty())
@@ -745,7 +745,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 const std::unique_ptr<FileT> &file = it->second.file;
 
@@ -794,7 +794,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 const std::unique_ptr<FileT> &file = it->second.file;
 
@@ -819,7 +819,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 const std::optional<MarkupContent> hover = it->second.file->hover();
                 if (not hover.has_value())
@@ -838,7 +838,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<CodeLens> lenses = it->second.file->codeLenses();
                 if (lenses.empty())
@@ -894,7 +894,7 @@ private:
 
                 const auto it = m_openNotebooks.find(params.notebookDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 NotebookWrapper &notebook = it->second;
                 if (not params.change.cells.has_value()
@@ -904,7 +904,7 @@ private:
                 for (const auto &change : params.change.cells->textContent.value_or({})) {
                         const auto docIt = m_openDocuments.find(change.document);
                         if (docIt == m_openDocuments.end())
-                                return internal_error;
+                                return _internalError("File not found");
 
                         TextDocumentItem &doc = docIt->second.textDocument;
                         _updateTextDocument(doc.text, change.changes);
@@ -931,7 +931,7 @@ private:
                                 for (uinteger i = 0; i < structure.array.start; ++i) {
                                         auto docIt = m_openDocuments.find(notebook.cells[i]);
                                         if (docIt == m_openDocuments.end())
-                                                return internal_error;
+                                                return _internalError("File not found");
 
                                         previous[i] = docIt->second.file->get();
                                 }
@@ -943,7 +943,7 @@ private:
                                                 structure.didOpen.value(),
                                                 [uri = cell.document](const TextDocumentItem &document) -> bool { return document.uri == uri; });
                                         if (docIt == structure.didOpen.value().end())
-                                                return internal_error;
+                                                return _internalError("File not found");
 
                                         const auto added = m_openDocuments.try_emplace(
                                                 docIt->uri,
@@ -979,7 +979,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.notebookDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 for (const auto &cell : it->second.cells.value())
                         m_openDocuments.erase(cell.uri);
@@ -996,7 +996,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> roots = it->second.file->roots();
                 if (roots.empty())
@@ -1016,7 +1016,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.item.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> parents = it->second.file->parents(
                         params.item.name, params.item.selectionRange);
@@ -1046,7 +1046,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.item.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> children = it->second.file->children(
                         params.item.name, params.item.selectionRange);
@@ -1073,7 +1073,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> roots = it->second.file->roots();
                 if (roots.empty())
@@ -1093,7 +1093,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.item.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> parents = it->second.file->parents(
                         params.item.name, params.item.selectionRange);
@@ -1114,7 +1114,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.item.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<HierarchyItem> children = it->second.file->children(
                         params.item.name, params.item.selectionRange);
@@ -1132,7 +1132,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<DocumentHighlight> highlights = it->second.file->highlights();
                 if (highlights.empty())
@@ -1152,7 +1152,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<Link> links = it->second.file->links();
                 if (links.empty())
@@ -1178,7 +1178,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<Fold> folds = it->second.file->foldingRanges();
                 if (folds.empty())
@@ -1207,7 +1207,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<SelectionRange> selections;
                 selections.reserve(params.positions.size());
@@ -1240,7 +1240,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<DocumentSymbol> symbols = it->second.file->symbols();
                 if (symbols.empty())
@@ -1289,7 +1289,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 return SemanticTokens{
                         .data = _semanticTokens(it->second.file)
@@ -1304,7 +1304,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<uinteger> tokens = _semanticTokens(it->second.file, params.range);
                 if (tokens.empty())
@@ -1323,7 +1323,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<InlayHint> hints= it->second.file->hints(params.range);
                 if (hints.empty())
@@ -1340,7 +1340,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<InlineValue> values = it->second.file->inlineValues(params.range, params.context);
                 if (values.empty())
@@ -1357,7 +1357,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<CompletionItem> completions = it->second.file->completions(params.position);
                 if (completions.empty())
@@ -1374,7 +1374,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 return RelatedFullDocumentDiagnosticReport{
                         FullDocumentDiagnosticReport{
@@ -1414,7 +1414,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::optional<SignatureHelp> help = it->second.file->signatureHelp(params.position);
                 if (not help.has_value() or help->signatures.empty())
@@ -1431,7 +1431,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<std::variant<Command, CodeAction>> actions = it->second.file->actions(params.range, params.context.only);
                 if (actions.empty())
@@ -1448,7 +1448,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 return it->second.file->colors();
         }
@@ -1461,7 +1461,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 return it->second.file->placeColor(params.color, params.range);
         }
@@ -1474,7 +1474,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<TextEdit> edits = it->second.file->format(params.options, std::nullopt);
                 if (edits.empty())
@@ -1491,7 +1491,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<TextEdit> edits = it->second.file->format(params.options, params.range);
                 if (edits.empty())
@@ -1508,7 +1508,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<TextEdit> edits;
                 for (const Range &range : params.ranges)
@@ -1528,7 +1528,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<TextEdit> edits = it->second.file->format(params.options, params.position);
                 if (edits.empty())
@@ -1547,7 +1547,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::unordered_map<DocumentUri, std::vector<TextEdit>> edits;
 
@@ -1574,7 +1574,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 const std::expected<Range, string> rename = it->second.file->canRename(params.position);
                 if (rename.has_value())
@@ -1595,7 +1595,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 LinkedEditingRanges ranges = it->second.file->editingRanges(params.position);
                 if (ranges.ranges.empty())
@@ -1612,7 +1612,7 @@ private:
 
                 const auto it = m_openDocuments.find(params.textDocument.uri);
                 if (it == m_openDocuments.end())
-                        return internal_error;
+                        return _internalError("File not found");
 
                 std::vector<InlineCompletionItem> completions = it->second.file->inlineCompletions(params.position);
                 if (completions.empty())

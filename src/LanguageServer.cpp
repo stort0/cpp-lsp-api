@@ -18,8 +18,7 @@ namespace fs = std::filesystem;
 
 namespace LSP {
 
-const std::unexpected<glz::rpc::error> _LanguageServerImpl::not_initialized_error = std::unexpected(glz::rpc::error(glz::rpc::error_e::internal));
-const std::unexpected<glz::rpc::error> _LanguageServerImpl::internal_error        = std::unexpected(glz::rpc::error(
+const std::unexpected<glz::rpc::error> _LanguageServerImpl::not_initialized_error = std::unexpected(glz::rpc::error(
        static_cast<glz::rpc::error_e>(ErrorCodes::ServerNotInitialized),
        std::nullopt,
        "Server not initialized"
@@ -189,6 +188,15 @@ auto _LanguageServerImpl::_convertDocumentSymbols(const DocumentUri &uri, std::v
                 _addWorkspaceSymbol(uri, ret, symbols[i]);
 
         return ret;
+}
+
+auto _LanguageServerImpl::_internalError(const std::string &msg) const -> std::unexpected<glz::rpc::error>
+{
+        return std::unexpected(glz::rpc::error(
+                static_cast<glz::rpc::error_e>(ErrorCodes::RequestFailed),
+                std::nullopt,
+                msg
+        ));
 }
 
 auto _LanguageServerImpl::_readHeader() const -> size_t
