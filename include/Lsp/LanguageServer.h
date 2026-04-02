@@ -108,6 +108,7 @@ and requires (const typename T::TokenT t)
         { static_cast<uinteger>(T::TokenT::invalid_type) };
         { static_cast<uinteger>(t.type()) };
         { static_cast<uinteger>(t.modifier()) };
+        { static_cast<uinteger>(t.length()) };
 
 }; // concept HasSemanticTokens
 
@@ -1645,15 +1646,40 @@ private:
                         if (range.has_value() and token > range->end)
                                 break;
 
-                        const uinteger deltaLine = token.line - prevLine;
-                        sem.push_back(deltaLine);
-                        sem.push_back(deltaLine ? token.start : token.start - prevCharacter);
-                        sem.push_back(token.length);
-                        sem.push_back(static_cast<uinteger>(type));
-                        sem.push_back(static_cast<uinteger>(mod));
+                        const Range rng = token.range();
+                        if (rng.start.line != rng.end.line and
+                            not m_clientCapabilities.textDocument.value_or({}).semanticTokens.value_or({}).multilineTokenSupport.value_or(false)) {  // multiline token, not supported by client, split on every line
+                                const uinteger linesCount = rng.end.line - rng.start.line;
+                                for (uint32_t i = 0; i < linesCount; ++i) {
+                                        const uinteger line      = rng.start.line + i;
+                                        const uinteger start     = i == 0 ? rng.start.character : 0;
+                                        const uinteger length    = i != linesCount - 1 ? 0xFFFF'FFFF : rng.end.character;  // when multiline tokens are not supported, use max length to reach end of line
+                                        const uinteger deltaLine = line - prevLine;
 
-                        prevLine      = token.line;
-                        prevCharacter = token.start;
+                                        sem.push_back(deltaLine);
+                                        sem.push_back(deltaLine ? start : start - prevCharacter);
+                                        sem.push_back(length);
+                                        sem.push_back(type);
+                                        sem.push_back(mod);
+
+                                        prevLine      = line;
+                                        prevCharacter = start;
+                                }
+                        } else {
+                                const uinteger line      = rng.start.line;
+                                const uinteger start     = rng.start.character;
+                                const uinteger length    = token.length();
+                                const uinteger deltaLine = line - prevLine;
+
+                                sem.push_back(deltaLine);
+                                sem.push_back(deltaLine ? start : start - prevCharacter);
+                                sem.push_back(length);
+                                sem.push_back(type);
+                                sem.push_back(mod);
+
+                                prevLine      = line;
+                                prevCharacter = start;
+                        }
                 }
 
                 return sem;
