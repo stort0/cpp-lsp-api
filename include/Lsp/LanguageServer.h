@@ -1659,11 +1659,9 @@ private:
                         const Range rng = token.range();
                         const auto mod  = static_cast<uinteger>(token.modifier());
                         if (rng.start.line != rng.end.line) {
-                                if constexpr (not HasTokenSplit<FileT>)
-                                        continue;
-
-                                for (const TokenT &child : token.split())
-                                        _addSemanticTokensData(sem, child.range(), prevLine, prevCharacter, type, mod);
+                                if constexpr (HasTokenSplit<FileT>)
+                                        for (const TokenT &child : token.split())
+                                                _addSemanticTokensData(sem, child.range(), prevLine, prevCharacter, type, mod);
                         } else {
                                 _addSemanticTokensData(sem, rng, prevLine, prevCharacter, type, mod);
                         }
