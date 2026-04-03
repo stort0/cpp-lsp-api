@@ -1647,39 +1647,22 @@ private:
                                 break;
 
                         const Range rng = token.range();
-                        if (rng.start.line != rng.end.line and
-                            not m_clientCapabilities.textDocument.value_or({}).semanticTokens.value_or({}).multilineTokenSupport.value_or(false)) {  // multiline token, not supported by client, split on every line
-                                const uinteger linesCount = rng.end.line - rng.start.line;
-                                for (uint32_t i = 0; i < linesCount; ++i) {
-                                        const uinteger line      = rng.start.line + i;
-                                        const uinteger start     = i == 0 ? rng.start.character : 0;
-                                        const uinteger length    = i != linesCount - 1 ? 0xFFFF'FFFF : rng.end.character;  // when multiline tokens are not supported, use max length to reach end of line
-                                        const uinteger deltaLine = line - prevLine;
+                        if (rng.start.line != rng.end.line)
+                                continue;
 
-                                        sem.push_back(deltaLine);
-                                        sem.push_back(deltaLine ? start : start - prevCharacter);
-                                        sem.push_back(length);
-                                        sem.push_back(type);
-                                        sem.push_back(mod);
+                        const uinteger line      = rng.start.line;
+                        const uinteger start     = rng.start.character;
+                        const uinteger length    = rng.end.character - rng.start.character;
+                        const uinteger deltaLine = line - prevLine;
 
-                                        prevLine      = line;
-                                        prevCharacter = start;
-                                }
-                        } else {
-                                const uinteger line      = rng.start.line;
-                                const uinteger start     = rng.start.character;
-                                const uinteger length    = token.length();
-                                const uinteger deltaLine = line - prevLine;
+                        sem.push_back(deltaLine);
+                        sem.push_back(deltaLine ? start : start - prevCharacter);
+                        sem.push_back(length);
+                        sem.push_back(type);
+                        sem.push_back(mod);
 
-                                sem.push_back(deltaLine);
-                                sem.push_back(deltaLine ? start : start - prevCharacter);
-                                sem.push_back(length);
-                                sem.push_back(type);
-                                sem.push_back(mod);
-
-                                prevLine      = line;
-                                prevCharacter = start;
-                        }
+                        prevLine      = line;
+                        prevCharacter = start;
                 }
 
                 return sem;

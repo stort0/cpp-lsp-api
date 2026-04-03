@@ -12,6 +12,9 @@ handle the client requests. The server features are checked through **concepts**
 > server will **replace** the old one when the file is updated.
 > All functions used by the `LanguageServer` **must** be `const`.
 
+> A `TokenT` type must not span along multiple lines for semantic tokenization
+> to work. (token will be skipped).
+
 ### Complete implementation of a file parser
 
 ```c++
