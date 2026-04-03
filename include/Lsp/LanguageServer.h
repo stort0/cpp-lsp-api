@@ -108,9 +108,20 @@ and requires (const typename T::TokenT t)
         { static_cast<uinteger>(T::TokenT::invalid_type) };
         { static_cast<uinteger>(t.type()) };
         { static_cast<uinteger>(t.modifier()) };
-        { static_cast<uinteger>(t.length()) };
 
 }; // concept HasSemanticTokens
+
+template<typename T>
+concept HasTokenSplit = requires(const T v)
+{
+        requires File<T>;
+
+}
+and requires (const typename T::TokenT t)
+{
+        { t.split() } -> std::convertible_to<std::vector<typename T::TokenT>>;
+
+}; // concept HasTokenSplit
 
 template<typename T>
 concept HasHover = requires(const T v)
@@ -1638,34 +1649,44 @@ private:
                 uinteger prevCharacter = 0;
                 for (; it != end; ++it) {
                         const TokenT &token = *it;
-                        const auto type     = static_cast<uinteger>(token.type());
-                        const auto mod      = static_cast<uinteger>(token.modifier());
-                        if (type == static_cast<uinteger>(TokenT::invalid_type))
-                                continue;
-
                         if (range.has_value() and token > range->end)
                                 break;
 
-                        const Range rng = token.range();
-                        if (rng.start.line != rng.end.line)
+                        const auto type = static_cast<uinteger>(token.type());
+                        if (type == static_cast<uinteger>(TokenT::invalid_type))
                                 continue;
 
-                        const uinteger line      = rng.start.line;
-                        const uinteger start     = rng.start.character;
-                        const uinteger length    = rng.end.character - rng.start.character;
-                        const uinteger deltaLine = line - prevLine;
+                        const Range rng = token.range();
+                        const auto mod  = static_cast<uinteger>(token.modifier());
+                        if (rng.start.line != rng.end.line) {
+                                if constexpr (not HasTokenSplit<FileT>)
+                                        continue;
 
-                        sem.push_back(deltaLine);
-                        sem.push_back(deltaLine ? start : start - prevCharacter);
-                        sem.push_back(length);
-                        sem.push_back(type);
-                        sem.push_back(mod);
-
-                        prevLine      = line;
-                        prevCharacter = start;
+                                for (const TokenT &child : token.split())
+                                        _addSemanticTokensData(sem, child.range(), prevLine, prevCharacter, type, mod);
+                        } else {
+                                _addSemanticTokensData(sem, rng, prevLine, prevCharacter, type, mod);
+                        }
                 }
 
                 return sem;
+        }
+
+        static void _addSemanticTokensData(std::vector<uinteger> &sem, const Range &rng, uinteger &prevLine, uinteger &prevCharacter, uinteger type, uinteger mod)
+        {
+                const uinteger line      = rng.start.line;
+                const uinteger start     = rng.start.character;
+                const uinteger length    = rng.end.character - rng.start.character;
+                const uinteger deltaLine = line - prevLine;
+
+                sem.push_back(deltaLine);
+                sem.push_back(deltaLine ? start : start - prevCharacter);
+                sem.push_back(length);
+                sem.push_back(type);
+                sem.push_back(mod);
+
+                prevLine      = line;
+                prevCharacter = start;
         }
 
         static auto _getCapabilities() -> ServerCapabilities

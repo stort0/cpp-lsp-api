@@ -12,8 +12,8 @@ handle the client requests. The server features are checked through **concepts**
 > server will **replace** the old one when the file is updated.
 > All functions used by the `LanguageServer` **must** be `const`.
 
-> A `TokenT` type must not span along multiple lines for semantic tokenization
-> to work. (token will be skipped).
+> If a `TokenT` type token spans across multiple lines, the method `split()` is
+> required for semantic tokens (otherwise token will be skipped).
 
 ### Complete implementation of a file parser
 
@@ -33,7 +33,8 @@ public:
         static const uinteger invalid_type;
         auto type() const -> uinteger;
         auto modifier() const -> uinteger;
-
+        auto split() const -> std::vector<MyTokenType>;  // optional
+    
 };
 
 class MyRefactorContext {
