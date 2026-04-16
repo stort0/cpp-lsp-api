@@ -149,16 +149,16 @@ concept HasDiagnostic = requires(const T v)
 }; // concept HasDiagnostic
 
 struct HierarchyItem {
-        string                 name;
-        string                 detail;
-        std::vector<SymbolTag> tags;
-        Range                  fullRange;
-        Range                  range;
-        SymbolKind             kind;
-        std::vector<Range>     sources;  // Only for functions:
-                                         // in parent items, where the element is
-                                         // referred to, in children where the
-                                         // element refers to them.
+        string                                name;
+        std::optional<string>                 detail;
+        std::optional<std::vector<SymbolTag>> tags;
+        Range                                 fullRange;
+        Range                                 range;
+        SymbolKind                            kind;
+        // Not for roots and only for functions (mandatory):
+        // in parent items, where the element is referred to, in children where
+        // the element refers to it.
+        std::optional<std::vector<Range>>     sources;
 
 }; // struct HierarchyItem
 
@@ -1038,9 +1038,14 @@ private:
                 auto converted = _hierarchyItemToCall(params.item.uri, parents);
                 std::vector<CallHierarchyIncomingCall> ret(converted.size());
                 for (size_t i = 0; i < ret.size(); ++i) {
+                        if (not parents[i].sources.has_value())
+                                throw std::invalid_argument("HierarchyItem::sources "
+                                                            "must be set for non-root "
+                                                            "functions");
+
                         ret[i] = {
                                 .from       = std::move(converted[i]),
-                                .fromRanges = std::move(parents[i].sources)
+                                .fromRanges = std::move(parents[i].sources.value())
                         };
                 }
 
@@ -1068,9 +1073,14 @@ private:
                 auto converted = _hierarchyItemToCall(params.item.uri, children);
                 std::vector<CallHierarchyOutgoingCall> ret(converted.size());
                 for (size_t i = 0; i < ret.size(); ++i) {
+                        if (not children[i].sources.has_value())
+                                throw std::invalid_argument("HierarchyItem::sources "
+                                                            "must be set for non-root "
+                                                            "functions");
+
                         ret[i] = {
                                 .to         = std::move(converted[i]),
-                                .fromRanges = std::move(children[i].sources)
+                                .fromRanges = std::move(children[i].sources.value())
                         };
                 }
 

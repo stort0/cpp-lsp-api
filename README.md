@@ -15,6 +15,12 @@ handle the client requests. The server features are checked through **concepts**
 > If a `TokenT` type token spans across multiple lines, the method `split()` is
 > required for semantic tokens (otherwise token will be skipped).
 
+### Disable catch of exception
+
+To forward all exception that happen during the language server execution,
+define `CPP_LSP_API_DISABLE_CATCH` or `CPP_LSP_API_DISABLE_CATCH_DEBUG` to only
+disable it during debug mode.
+
 ### Complete implementation of a file parser
 
 ```c++
