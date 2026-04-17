@@ -1012,7 +1012,8 @@ private:
                 if (it == m_openDocuments.end())
                         return _internalError("File not found");
 
-                std::vector<HierarchyItem> roots = it->second.file->roots();
+                std::vector<HierarchyItem> roots = it->second.file->roots(
+                        params.position);
                 if (roots.empty())
                         return nullptr;
 
@@ -1099,7 +1100,8 @@ private:
                 if (it == m_openDocuments.end())
                         return _internalError("File not found");
 
-                std::vector<HierarchyItem> roots = it->second.file->roots();
+                std::vector<HierarchyItem> roots = it->second.file->roots(
+                        params.position);
                 if (roots.empty())
                         return nullptr;
 
