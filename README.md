@@ -53,13 +53,9 @@ public:
          * Required elements
          */
         using TokenT    = MyTokenType;  // MUST BE A BASIC TYPE (NO CVREF)
-        using TokenItT  = const MyTokenType *;
         using TokenPtrT = const MyTokenType *;
 
         static auto parse(const std::string &text) -> std::unique_ptr<MyLanguageFile>;
-
-        auto begin() const -> TokenItT;
-        auto end() const -> TokenItT;
 
         /*
          * Required for notebook parsing
@@ -85,9 +81,13 @@ public:
         /*
          * Required for semantic tokens
          */
+        using TokenItT  = const MyTokenType *;
         static const std::vector<string> token_types;
         static const std::vector<string> token_modifiers;
+        auto begin() const -> TokenItT;
+        auto end() const -> TokenItT;
 
+    
         /*
          * Required for hover
          */

@@ -33,21 +33,9 @@ concept File = requires(const T v)
         typename T::TokenT;
         requires std::same_as<typename T::TokenT, std::remove_cvref_t<typename T::TokenT>>;
 
-        typename T::TokenItT;
         typename T::TokenPtrT;
 
-        { v.begin() } -> std::convertible_to<typename T::TokenItT>;
-        { v.end() } -> std::convertible_to<typename T::TokenItT>;
         { T::parse(std::string{}) } -> std::same_as<std::unique_ptr<T>>;
-
-}
-and requires (typename T::TokenItT it)
-{
-        ++it;
-        { it == it } -> std::convertible_to<bool>;
-        { it != it } -> std::convertible_to<bool>;
-        { *it } -> std::convertible_to<typename T::TokenT>;
-        requires std::is_reference_v<decltype(*it)>;
 
 }
 and requires (typename T::TokenPtrT p)
@@ -99,8 +87,22 @@ template<typename T>
 concept HasSemanticTokens = requires(const T v)
 {
         requires File<T>;
+
+        typename T::TokenItT;
+
         { T::token_types } -> std::convertible_to<std::vector<string>>;
         { T::token_modifiers } -> std::convertible_to<std::vector<string>>;
+
+        { v.begin() } -> std::convertible_to<typename T::TokenItT>;
+        { v.end() } -> std::convertible_to<typename T::TokenItT>;
+}
+and requires (typename T::TokenItT it)
+{
+        ++it;
+        { it == it } -> std::convertible_to<bool>;
+        { it != it } -> std::convertible_to<bool>;
+        { *it } -> std::convertible_to<typename T::TokenT>;
+        requires std::is_reference_v<decltype(*it)>;
 
 }
 and requires (const typename T::TokenT t)
@@ -488,7 +490,6 @@ class LanguageServer : public _LanguageServerImpl
 
         using BaseT     = _LanguageServerImpl;
         using TokenT    = FileT::TokenT;
-        using TokenItT  = FileT::TokenItT;
         using TokenPtrT = FileT::TokenPtrT;
 
 public:
@@ -1650,6 +1651,8 @@ private:
         auto _semanticTokens(const std::unique_ptr<FileT> &file, const std::optional<Range> &range = std::nullopt) const -> std::vector<uinteger>
                 requires HasSemanticTokens<FileT>
         {
+                using TokenItT  = FileT::TokenItT;
+
                 std::vector<uinteger> sem;
                 sem.reserve(250);
 
