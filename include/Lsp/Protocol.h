@@ -49,7 +49,7 @@ using null     = std::nullptr_t;
  *
  * @version 3.17.0
  */
-using LSPAny = glz::generic;
+using LSPAny = glz::generic_u64;
 
 /**
  * LSP object definition.
