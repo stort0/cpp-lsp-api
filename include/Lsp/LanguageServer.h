@@ -159,6 +159,8 @@ struct HierarchyItem {
         // in parent items, where the element is referred to, in children where
         // the element refers to it.
         std::optional<std::vector<Range>>     sources;
+        // Data sent back when asking for children and parents.
+        std::optional<LSPAny>                 data;
 
 }; // struct HierarchyItem
 
@@ -167,8 +169,8 @@ concept HasHierarchy = requires(T v)
 {
         requires File<T>;
         { v.roots(Position{}) } -> std::convertible_to<std::vector<HierarchyItem>>;
-        { v.children(std::string{}, Range{}) } -> std::convertible_to<std::vector<HierarchyItem>>;
-        { v.parents(std::string{}, Range{}) } -> std::convertible_to<std::vector<HierarchyItem>>;
+        { v.children(std::optional<LSPAny>{}) } -> std::convertible_to<std::vector<HierarchyItem>>;
+        { v.parents(std::optional<LSPAny>{}) } -> std::convertible_to<std::vector<HierarchyItem>>;
 
 }; // concept HasHierarchy
 
@@ -1031,7 +1033,7 @@ private:
                         return _internalError("File not found");
 
                 std::vector<HierarchyItem> parents = it->second.file->parents(
-                        params.item.name, params.item.selectionRange);
+                        params.item.data);
                 if (parents.empty())
                         return nullptr;
 
@@ -1066,7 +1068,7 @@ private:
                         return _internalError("File not found");
 
                 std::vector<HierarchyItem> children = it->second.file->children(
-                        params.item.name, params.item.selectionRange);
+                        params.item.data);
                 if (children.empty())
                         return nullptr;
 
@@ -1118,7 +1120,7 @@ private:
                         return _internalError("File not found");
 
                 std::vector<HierarchyItem> parents = it->second.file->parents(
-                        params.item.name, params.item.selectionRange);
+                        params.item.data);
                 if (parents.empty())
                         return nullptr;
 
@@ -1139,7 +1141,7 @@ private:
                         return _internalError("File not found");
 
                 std::vector<HierarchyItem> children = it->second.file->children(
-                        params.item.name, params.item.selectionRange);
+                        params.item.data);
                 if (children.empty())
                         return nullptr;
 

@@ -108,8 +108,8 @@ public:
          * Required for call/type hierarchy
          */
         auto roots(Position pos) const -> std::vector<LSP::HierarchyItem>;
-        auto children(const std::string &root, const Range &range) const -> std::vector<LSP::HierarchyItem>;
-        auto parents(const std::string &root, const Range &range) const -> std::vector<LSP::HierarchyItem>;
+        auto children(const std::optional<LSPAny> &data) const -> std::vector<LSP::HierarchyItem>;
+        auto parents(const std::optional<LSPAny> &data) const -> std::vector<LSP::HierarchyItem>;
 
         /*
          * Required for highlights

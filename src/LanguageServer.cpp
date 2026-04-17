@@ -163,7 +163,8 @@ auto _LanguageServerImpl::_hierarchyItemToCall(const string &uri, std::vector<Hi
                         .detail         = item.detail,
                         .uri            = uri,
                         .range          = item.fullRange,
-                        .selectionRange = item.range
+                        .selectionRange = item.range,
+                        .data           = std::move(item.data)
                 };
         };
 
@@ -183,7 +184,8 @@ auto _LanguageServerImpl::_hierarchyItemToType(const string &uri, std::vector<Hi
                         .detail         = item.detail,
                         .uri            = uri,
                         .range          = item.fullRange,
-                        .selectionRange = item.range
+                        .selectionRange = item.range,
+                        .data           = std::move(item.data)
                 };
         };
 
