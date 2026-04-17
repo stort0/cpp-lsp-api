@@ -536,8 +536,8 @@ public:
                         _listen("callHierarchy/incomingCalls", incomingCalls);
                         _listen("callHierarchy/outgoingCalls", outgoingCalls);
                         _listen("textDocument/prepareTypeHierarchy", prepareTypeHierarchy);
-                        _listen("textDocument/supertypes", superTypes);
-                        _listen("textDocument/subtypes", subTypes);
+                        _listen("typeHierarchy/supertypes", superTypes);
+                        _listen("typeHierarchy/subtypes", subTypes);
                 }
 
                 if constexpr (HasHighlight<FileT>)
