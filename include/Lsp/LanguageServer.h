@@ -1149,7 +1149,8 @@ private:
                 if (it == m_openDocuments.end())
                         return _internalError("File not found");
 
-                std::vector<DocumentHighlight> highlights = it->second.file->highlights();
+                std::vector<DocumentHighlight> highlights = it->second.file->highlights(
+                        params.position);
                 if (highlights.empty())
                         return nullptr;
 
