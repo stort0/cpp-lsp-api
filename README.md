@@ -126,7 +126,7 @@ public:
         auto foldingRanges() const -> std::vector<LSP::Fold>;
 
         /*
-         * Required for folding ranges
+         * Required for selection ranges
          */
         auto selectionRanges(Position pos) const -> std::vector<Range>;  // RANGES MUST BE INCREASINGLY BIGGER,
                                                                          // ELEMENTS MUST CONTAIN THE PREVIOUS ONES
