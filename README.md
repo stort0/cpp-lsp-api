@@ -30,13 +30,12 @@ public:
          * Required elements
          */
         auto range() const -> Range;
-        auto operator<=> (const MyTokenType &other) const -> std::weak_ordering;
-        auto operator<=> (Position pos) const -> std::weak_ordering;  // == means the position is inside range()
 
         /*
          * Required for semantic tokens
          */
         static const uinteger invalid_type;
+        auto operator<=> (Position pos) const -> std::weak_ordering;  // == means the position is inside range()
         auto type() const -> uinteger;
         auto modifier() const -> uinteger;
         auto split() const -> std::vector<MyTokenType>;  // optional
@@ -81,12 +80,12 @@ public:
         /*
          * Required for semantic tokens
          */
-        using TokenItT  = const MyTokenType *;
         static const std::vector<string> token_types;
         static const std::vector<string> token_modifiers;
-        auto begin() const -> TokenItT;
-        auto end() const -> TokenItT;
-
+        auto visibleTokens() const -> std::ranges::input_range;  // Any range with value_type == Token
+        // optional, should be set to true if visibleTokens() returns a sorted array
+        // based on the token Range.    
+        static const bool ordered_visible_tokens;
     
         /*
          * Required for hover

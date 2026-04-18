@@ -45,8 +45,6 @@ and requires (typename T::TokenPtrT p)
 and requires (const typename T::TokenT t)
 {
         { t.range() } -> std::convertible_to<Range>;
-        { t.operator<=>(t) } -> std::same_as<std::weak_ordering>;
-        { t.operator<=>(Position{}) } -> std::same_as<std::weak_ordering>;
 
 }; // concept File
 
@@ -88,28 +86,18 @@ concept HasSemanticTokens = requires(const T v)
 {
         requires File<T>;
 
-        typename T::TokenItT;
-
         { T::token_types } -> std::convertible_to<std::vector<string>>;
         { T::token_modifiers } -> std::convertible_to<std::vector<string>>;
 
-        { v.begin() } -> std::convertible_to<typename T::TokenItT>;
-        { v.end() } -> std::convertible_to<typename T::TokenItT>;
-}
-and requires (typename T::TokenItT it)
-{
-        ++it;
-        { it == it } -> std::convertible_to<bool>;
-        { it != it } -> std::convertible_to<bool>;
-        { *it } -> std::convertible_to<typename T::TokenT>;
-        requires std::is_reference_v<decltype(*it)>;
-
+        { v.visibleTokens() } -> std::ranges::input_range;
+        { *v.visibleTokens().begin() } -> std::convertible_to<typename T::TokenT>;
 }
 and requires (const typename T::TokenT t)
 {
         { static_cast<uinteger>(T::TokenT::invalid_type) };
         { static_cast<uinteger>(t.type()) };
         { static_cast<uinteger>(t.modifier()) };
+        { t.operator<=>(Position{}) } -> std::same_as<std::weak_ordering>;
 
 }; // concept HasSemanticTokens
 
@@ -1651,16 +1639,31 @@ private:
         auto _semanticTokens(const std::unique_ptr<FileT> &file, const std::optional<Range> &range = std::nullopt) const -> std::vector<uinteger>
                 requires HasSemanticTokens<FileT>
         {
-                using TokenItT  = FileT::TokenItT;
+                namespace rng = std::ranges;
 
                 std::vector<uinteger> sem;
                 sem.reserve(250);
 
-                TokenItT it        = file->begin();
-                const TokenItT end = file->end();
-                if (range.has_value())
+                auto tokens = file->visibleTokens();
+                auto it     = tokens.begin();
+                auto end    = tokens.end();
+                while (range.has_value()) {
+                        if constexpr (requires { { FileT::ordered_visible_tokens } -> std::convertible_to<bool>; }) {
+                                if (FileT::ordered_visible_tokens) {
+                                        it = std::upper_bound(
+                                                it, end, range->start);
+                                        // While loop to avoid gotos here:
+                                        // if the constexpr if fails, the goto
+                                        // is not evaluated and the label use to
+                                        // exit results unused.
+                                        break;
+                                }
+                        }
+
                         while (it != end and *it < range->start)
                                 ++it;
+                        break;
+                }
 
                 uinteger prevLine      = 0;
                 uinteger prevCharacter = 0;
@@ -1673,14 +1676,18 @@ private:
                         if (type == static_cast<uinteger>(TokenT::invalid_type))
                                 continue;
 
-                        const Range rng = token.range();
-                        const auto mod  = static_cast<uinteger>(token.modifier());
-                        if (rng.start.line != rng.end.line) {
+                        const Range tokenRange = token.range();
+                        const auto mod         = static_cast<uinteger>(token.modifier());
+                        if (tokenRange.start.line != tokenRange.end.line) {
                                 if constexpr (HasTokenSplit<FileT>)
                                         for (const TokenT &child : token.split())
-                                                _addSemanticTokensData(sem, child.range(), prevLine, prevCharacter, type, mod);
+                                                _addSemanticTokensData(
+                                                        sem, child.range(), prevLine,
+                                                        prevCharacter, type, mod);
                         } else {
-                                _addSemanticTokensData(sem, rng, prevLine, prevCharacter, type, mod);
+                                _addSemanticTokensData(
+                                        sem, tokenRange, prevLine, prevCharacter,
+                                        type, mod);
                         }
                 }
 
