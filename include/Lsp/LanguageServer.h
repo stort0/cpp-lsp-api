@@ -90,7 +90,7 @@ concept HasSemanticTokens = requires(const T v)
         { T::token_modifiers } -> std::convertible_to<std::vector<string>>;
 
         { v.visibleTokens() } -> std::ranges::input_range;
-        { *v.visibleTokens().begin() } -> std::convertible_to<typename T::TokenT>;
+        requires std::convertible_to<std::ranges::range_value_t<decltype(v.visibleTokens())>, typename T::TokenT>;
 }
 and requires (const typename T::TokenT t)
 {
@@ -1740,7 +1740,7 @@ private:
                         .documentHighlightProvider       = HasHighlight<FileT> ? std::optional(true) : std::nullopt,
                         .documentSymbolProvider          = HasSymbols<FileT> ? std::optional(true) : std::nullopt,
                         .codeActionProvider              = HasCodeAction<FileT> ? std::optional(CodeActionOptions{
-                                // TODO action kinds
+                                // TODO: action kinds
                                 .resolveProvider = false
                         }) : std::nullopt,
                         .codeLensProvider                = HasCodeLens<FileT> ? std::optional(CodeLensOptions{
