@@ -824,7 +824,8 @@ private:
                 if (it == m_openDocuments.end())
                         return _internalError("File not found");
 
-                const std::optional<MarkupContent> hover = it->second.file->hover();
+                const std::optional<MarkupContent> hover = it->second.file->hover(
+                        params.position);
                 if (not hover.has_value())
                         return nullptr;
 

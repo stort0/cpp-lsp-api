@@ -95,14 +95,7 @@ auto _LanguageServerImpl::loop() -> int
                                 ErrorCodes::RequestFailed,
                                 std::string("Internal server error: ") + e.what());
                 }
-#else // CPP_LSP_API_DISABLE_CATCH || (!CPP_LSP_API_DISABLE_CATCH_DEBUG || NDEBUG)
-                catch (std::exception &e) {
-                        // The server does not print \n at the end of its messages;
-                        // to make the error clear, print 2 new lines.
-                        fwrite("\n\n", sizeof(char), 2, m_out);
-                        throw;
-                }
-#endif // CPP_LSP_API_DISABLE_CATCH || (!CPP_LSP_API_DISABLE_CATCH_DEBUG || NDEBUG)
+#endif // !CPP_LSP_API_DISABLE_CATCH & !(CPP_LSP_API_DISABLE_CATCH_DEBUG && !NDEBUG)
         }
 
         return EXIT_FAILURE;  // Should always exit due to the "exit"
